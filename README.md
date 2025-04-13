@@ -117,15 +117,62 @@ For more verbose output, add the `-v` flag:
 go test -v ./...
 ```
 
+For race condition detection:
+
+```
+go test -race ./...
+```
+
+### Testing Requirements
+
+Tests require a `testdata` directory with test configuration files. This is automatically created when running tests via GitHub Actions, but for local testing you might need to create it:
+
+```bash
+mkdir -p testdata config/testdata
+echo '{"server":{"port":"5070","log_level":"info","bind_addr":"127.0.0.1"}}' > testdata/test_config.json
+echo '{"server":{"port":"5070","log_level":"info","bind_addr":"127.0.0.1"}}' > config/testdata/test_config.json
+```
+
 ## Continuous Integration
 
 This project uses GitHub Actions for continuous integration:
 
-- Builds and tests the code on multiple Go versions
+- Builds and tests the code on multiple Go versions (1.18, 1.19, 1.20)
 - Runs linting with golangci-lint
-- Generates test coverage reports
+- Generates test coverage reports and uploads to Codecov
+- Performs detailed package-by-package testing on failures
 
 You can see the current build status and test coverage at the top of this README.
+
+## Troubleshooting
+
+### Running Tests
+
+If you encounter issues with running tests:
+
+1. Make sure the required test directories exist:
+
+   ```bash
+   mkdir -p testdata config/testdata
+   ```
+
+2. Create test configuration files:
+
+   ```bash
+   echo '{"server":{"port":"5070","log_level":"info","bind_addr":"127.0.0.1"}}' > testdata/test_config.json
+   echo '{"server":{"port":"5070","log_level":"info","bind_addr":"127.0.0.1"}}' > config/testdata/test_config.json
+   ```
+
+3. Run tests with verbose output:
+
+   ```bash
+   go test -v ./...
+   ```
+
+4. For more detailed debugging, run tests one package at a time:
+   ```bash
+   go test -v github.com/user/go-sip/sip
+   ```
 
 ## Disclaimer
 

@@ -54,13 +54,23 @@ func (m *MockConn) GetSentData() []byte {
 	return m.sentData
 }
 
-func TestHandleRegister(t *testing.T) {
+func setupTestServer(t *testing.T) *Server {
 	// Create a server
 	server := NewServer("5060")
 
 	// Create a mock connection
 	mockConn := &MockConn{}
 	server.conn = mockConn
+
+	return server
+}
+
+func TestHandleRegister(t *testing.T) {
+	server := setupTestServer(t)
+	mockConn, ok := server.conn.(*MockConn)
+	if !ok {
+		t.Fatal("Failed to cast server.conn to *MockConn")
+	}
 
 	// Create a test client address
 	clientAddr := &net.UDPAddr{
@@ -108,12 +118,11 @@ func TestHandleRegister(t *testing.T) {
 }
 
 func TestHandleInvite(t *testing.T) {
-	// Create a server
-	server := NewServer("5060")
-
-	// Create a mock connection
-	mockConn := &MockConn{}
-	server.conn = mockConn
+	server := setupTestServer(t)
+	mockConn, ok := server.conn.(*MockConn)
+	if !ok {
+		t.Fatal("Failed to cast server.conn to *MockConn")
+	}
 
 	// Create a test client address
 	clientAddr := &net.UDPAddr{
@@ -164,12 +173,11 @@ func TestHandleInvite(t *testing.T) {
 }
 
 func TestHandleBye(t *testing.T) {
-	// Create a server
-	server := NewServer("5060")
-
-	// Create a mock connection
-	mockConn := &MockConn{}
-	server.conn = mockConn
+	server := setupTestServer(t)
+	mockConn, ok := server.conn.(*MockConn)
+	if !ok {
+		t.Fatal("Failed to cast server.conn to *MockConn")
+	}
 
 	// Create a test client address
 	clientAddr := &net.UDPAddr{
@@ -235,6 +243,10 @@ func TestExtractSIPURI(t *testing.T) {
 		{
 			header:   "<tel:+12345678>",
 			expected: "",
+		},
+		{
+			header:   "sip:alice@example.com",
+			expected: "sip:alice@example.com",
 		},
 	}
 

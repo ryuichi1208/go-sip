@@ -71,7 +71,13 @@ func TestParseMessage(t *testing.T) {
 	// Test empty message
 	_, err = ParseMessage("")
 	if err == nil {
-		t.Error("Expected error for empty message")
+		t.Error("Expected error for empty message, but got nil")
+	}
+
+	// Test malformed message
+	_, err = ParseMessage("NOT A SIP MESSAGE")
+	if err == nil {
+		t.Error("Expected error for malformed message, but got nil")
 	}
 }
 

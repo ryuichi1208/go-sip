@@ -1,99 +1,139 @@
 package main
 
 import (
+	"flag"
 	"os"
+	"path/filepath"
 	"testing"
-	"time"
 )
 
-func TestMain(t *testing.T) {
-	// This test just ensures the main package can be imported and compiled.
-	// This doesn't actually test the server running, as that would block
-	// and spin up real network connections.
+// TestMainCompilation は、mainパッケージがコンパイルできることを確認するだけのテスト
+func TestMainCompilation(t *testing.T) {
 	t.Log("Main package successfully compiled")
 }
 
+// TestArgumentParsing はコマンドライン引数のパースをテストする
 func TestArgumentParsing(t *testing.T) {
-	// Save original arguments
-	origArgs := os.Args
-	defer func() { os.Args = origArgs }()
+	// 元のフラグセットをバックアップ
+	origFlagSet := flag.CommandLine
+	defer func() {
+		flag.CommandLine = origFlagSet
+	}()
 
-	// Setup test cases
+	// 元の引数をバックアップ
+	origArgs := os.Args
+	defer func() {
+		os.Args = origArgs
+	}()
+
+	// テストケース
 	testCases := []struct {
-		name     string
-		args     []string
-		wantExit bool
+		name      string
+		args      []string
+		expectErr bool
 	}{
 		{
-			name:     "Default arguments",
-			args:     []string{"go-sip"},
-			wantExit: false,
+			name:      "Default arguments",
+			args:      []string{"go-sip"},
+			expectErr: false,
 		},
 		{
-			name:     "Custom port",
-			args:     []string{"go-sip", "-port", "5070"},
-			wantExit: false,
+			name:      "Custom port",
+			args:      []string{"go-sip", "-port", "5070"},
+			expectErr: false,
 		},
 		{
-			name:     "Custom bind",
-			args:     []string{"go-sip", "-bind", "127.0.0.1"},
-			wantExit: false,
+			name:      "Custom bind",
+			args:      []string{"go-sip", "-bind", "127.0.0.1"},
+			expectErr: false,
 		},
 		{
-			name:     "Custom config",
-			args:     []string{"go-sip", "-config", "test_config.json"},
-			wantExit: false,
-		},
-		{
-			name:     "Generate config",
-			args:     []string{"go-sip", "-generate-config"},
-			wantExit: true,
+			name:      "Custom config",
+			args:      []string{"go-sip", "-config", "test_config.json"},
+			expectErr: false,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Don't actually run the server, just validate args parsing
-			// This is simplified compared to real arg parsing that would happen in main()
+			// フラグを再設定
+			flag.CommandLine = flag.NewFlagSet(tc.args[0], flag.ContinueOnError)
+
+			// 引数を設定
 			os.Args = tc.args
 
-			// No real assertions here as we're just checking if the code would compile
-			// with these arguments. In a real application, you might mock the flag
-			// package or create more sophisticated tests.
-			t.Logf("Arguments %v would be valid", tc.args)
+			// configPathだけをテスト
+			configPath := flag.String("config", "config.json", "Path to configuration file")
+			overridePort := flag.String("port", "", "Override port setting from config file")
+			overrideBindAddr := flag.String("bind", "", "Override bind address setting from config file")
+
+			// フラグをパース
+			err := flag.CommandLine.Parse(tc.args[1:])
+
+			// 結果を確認
+			if (err != nil) != tc.expectErr {
+				t.Errorf("Expected error %v, got %v", tc.expectErr, err)
+			}
+
+			// 引数の値をログに出力（エラー時のデバッグ用）
+			t.Logf("Config path: %s", *configPath)
+			if *overridePort != "" {
+				t.Logf("Port override: %s", *overridePort)
+			}
+			if *overrideBindAddr != "" {
+				t.Logf("Bind address override: %s", *overrideBindAddr)
+			}
 		})
 	}
 }
 
-func TestGenerateConfig(t *testing.T) {
-	// Test the generate-config flag behavior
-	// Create a temporary config path
-	tempConfig := "test_generated_config.json"
-	defer os.Remove(tempConfig)
-
-	// Save original arguments
-	origArgs := os.Args
-	defer func() { os.Args = origArgs }()
-
-	// Set arguments to generate config
-	os.Args = []string{"go-sip", "-generate-config", "-config", tempConfig}
-
-	// Run in a goroutine as it might exit
-	go func() {
-		// Calling main() directly is not recommended as it can exit the process
-		// In a real test, you'd abstract this functionality to a non-exiting function
-		// For simplicity, we're just checking if the file gets created
-		time.Sleep(100 * time.Millisecond)
+// TestGenerateConfigFlag はgenerate-configフラグの動作をテストする
+func TestGenerateConfigFlag(t *testing.T) {
+	// 元のフラグセットをバックアップ
+	origFlagSet := flag.CommandLine
+	defer func() {
+		flag.CommandLine = origFlagSet
 	}()
 
-	// Wait a moment
-	time.Sleep(200 * time.Millisecond)
-
-	// Check if the config file was created
-	_, err := os.Stat(tempConfig)
-	if err != nil && os.IsNotExist(err) {
-		// This is not a real assertion because we're not actually running the main function
-		// In a real test, you'd check for the file's existence
-		t.Logf("In a real run, the config file %s would be created", tempConfig)
+	// テストデータディレクトリを準備
+	testDir := filepath.Join("testdata")
+	if err := os.MkdirAll(testDir, 0755); err != nil {
+		t.Fatalf("Failed to create test directory: %v", err)
 	}
+
+	// テスト用の設定ファイルパス
+	tempConfig := filepath.Join(testDir, "test_generated_config.json")
+	defer os.Remove(tempConfig)
+
+	// 元の引数をバックアップ
+	origArgs := os.Args
+	defer func() {
+		os.Args = origArgs
+	}()
+
+	// 引数を設定
+	os.Args = []string{"go-sip", "-generate-config", "-config", tempConfig}
+
+	// フラグを再設定
+	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+	configPath := flag.String("config", "config.json", "Path to configuration file")
+	generateConfig := flag.Bool("generate-config", false, "Generate default config file and exit")
+
+	// フラグをパース
+	err := flag.CommandLine.Parse(os.Args[1:])
+	if err != nil {
+		t.Fatalf("Failed to parse flags: %v", err)
+	}
+
+	// 値を確認
+	if !*generateConfig {
+		t.Error("generate-config flag should be true")
+	}
+
+	if *configPath != tempConfig {
+		t.Errorf("Expected config path %s, got %s", tempConfig, *configPath)
+	}
+
+	// ここで実際に設定ファイルを生成する代わりに値だけを確認する
+	t.Logf("Would generate config file at: %s", *configPath)
 }

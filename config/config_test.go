@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -26,8 +27,14 @@ func TestDefaultConfig(t *testing.T) {
 }
 
 func TestSaveAndLoadConfig(t *testing.T) {
-	// Create a temporary file path
-	tempFile := "test_config.json"
+	// Ensure testdata directory exists
+	testDir := filepath.Join("testdata")
+	if err := os.MkdirAll(testDir, 0755); err != nil {
+		t.Fatalf("Failed to create test directory: %v", err)
+	}
+
+	// Create a temporary file path in testdata
+	tempFile := filepath.Join(testDir, "test_config_save_load.json")
 	defer os.Remove(tempFile)
 
 	// Create and save a config
@@ -64,9 +71,46 @@ func TestSaveAndLoadConfig(t *testing.T) {
 	}
 }
 
+func TestLoadExistingConfig(t *testing.T) {
+	// Use the test config file that should exist in testdata
+	configFile := filepath.Join("testdata", "test_config.json")
+
+	// If file doesn't exist in the test environment, create it
+	if _, err := os.Stat(configFile); os.IsNotExist(err) {
+		// Create testdata dir if it doesn't exist
+		if err := os.MkdirAll(filepath.Dir(configFile), 0755); err != nil {
+			t.Skipf("Could not create testdata directory: %v", err)
+		}
+
+		// Create a sample config file for testing
+		testCfg := &Config{
+			Server: ServerConfig{
+				Port:     "5070",
+				LogLevel: "info",
+				BindAddr: "127.0.0.1",
+			},
+		}
+
+		if err := SaveConfig(testCfg, configFile); err != nil {
+			t.Skipf("Could not create test config file: %v", err)
+		}
+	}
+
+	// Load the config
+	cfg, err := LoadConfig(configFile)
+	if err != nil {
+		t.Fatalf("Failed to load existing config: %v", err)
+	}
+
+	// Check that we got a valid config
+	if cfg == nil {
+		t.Fatal("LoadConfig() returned nil config")
+	}
+}
+
 func TestLoadNonExistentConfig(t *testing.T) {
 	// Attempt to load a non-existent file
-	cfg, err := LoadConfig("non_existent_file.json")
+	cfg, err := LoadConfig("testdata/non_existent_file.json")
 
 	// Check that we get an error but still get a default config
 	if err == nil {

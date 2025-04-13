@@ -160,15 +160,30 @@ func (s *Server) sendResponse(addr *net.UDPAddr, msg *Message) {
 
 // extractSIPURI extracts SIP URI from header
 func extractSIPURI(header string) string {
+	// First search for sip: prefix
 	start := strings.Index(header, "sip:")
 	if start == -1 {
 		return ""
 	}
 
-	end := strings.Index(header[start:], ">")
-	if end == -1 {
-		return header[start:]
+	// Find the end of the URI (may be followed by > or ;)
+	var end int
+
+	// Look for >, which would indicate the URI is in a <>
+	angleEnd := strings.Index(header[start:], ">")
+
+	// Look for ; which would indicate parameters follow
+	semicolonEnd := strings.Index(header[start:], ";")
+
+	// Calculate the end position based on what we found
+	if angleEnd != -1 && (semicolonEnd == -1 || angleEnd < semicolonEnd) {
+		end = start + angleEnd
+	} else if semicolonEnd != -1 {
+		end = start + semicolonEnd
+	} else {
+		// If neither > nor ; is found, use the entire rest of the string
+		end = len(header)
 	}
 
-	return header[start : start+end]
+	return header[start:end]
 }

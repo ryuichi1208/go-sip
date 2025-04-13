@@ -8,6 +8,7 @@ A simple SIP server implemented in Go.
 - Handling of REGISTER, INVITE, and BYE requests
 - Generation of SIP responses
 - Configuration via config file
+- Comprehensive test suite
 
 ## Usage
 
@@ -89,6 +90,27 @@ go run examples/sip_client.go -server 127.0.0.1:5060 -user alice
 - INVITE: Call initiation
 - BYE: Call termination
 - ACK: Acknowledgment handling
+
+## Testing
+
+Run the test suite with:
+
+```
+go test ./...
+```
+
+This will run all tests in all packages. The test suite includes:
+
+- Unit tests for SIP message parsing and generation
+- Mock-based tests for the SIP server
+- Configuration file handling tests
+- Command-line argument parsing tests
+
+For more verbose output, add the `-v` flag:
+
+```
+go test -v ./...
+```
 
 ## Disclaimer
 

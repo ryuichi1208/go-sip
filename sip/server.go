@@ -7,11 +7,18 @@ import (
 	"strings"
 )
 
+// UDPConnInterface abstracts the UDP connection methods needed by the server
+type UDPConnInterface interface {
+	ReadFromUDP(b []byte) (int, *net.UDPAddr, error)
+	WriteToUDP(b []byte, addr *net.UDPAddr) (int, error)
+	Close() error
+}
+
 // Server represents a SIP server
 type Server struct {
 	Port      string
 	BindAddr  string
-	conn      *net.UDPConn
+	conn      UDPConnInterface
 	registrar map[string]string // user -> address mapping
 	calls     map[string]string // callID -> status mapping
 }
@@ -40,10 +47,11 @@ func (s *Server) Start() error {
 		return fmt.Errorf("address resolution error: %v", err)
 	}
 
-	s.conn, err = net.ListenUDP("udp", addr)
+	conn, err := net.ListenUDP("udp", addr)
 	if err != nil {
 		return fmt.Errorf("UDP listening error: %v", err)
 	}
+	s.conn = conn
 
 	log.Printf("SIP server started on %s", listenAddr)
 

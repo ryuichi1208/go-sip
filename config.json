@@ -1,0 +1,7 @@
+{
+  "server": {
+    "port": "5060",
+    "log_level": "info",
+    "bind_addr": "0.0.0.0"
+  }
+}

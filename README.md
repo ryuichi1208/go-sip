@@ -1,5 +1,9 @@
 # Go-SIP
 
+[![Go](https://github.com/user/go-sip/actions/workflows/go.yml/badge.svg)](https://github.com/user/go-sip/actions/workflows/go.yml)
+[![codecov](https://codecov.io/gh/user/go-sip/branch/main/graph/badge.svg)](https://codecov.io/gh/user/go-sip)
+[![Go Report Card](https://goreportcard.com/badge/github.com/user/go-sip)](https://goreportcard.com/report/github.com/user/go-sip)
+
 A simple SIP server implemented in Go.
 
 ## Features
@@ -9,6 +13,7 @@ A simple SIP server implemented in Go.
 - Generation of SIP responses
 - Configuration via config file
 - Comprehensive test suite
+- CI/CD with GitHub Actions
 
 ## Usage
 
@@ -111,6 +116,16 @@ For more verbose output, add the `-v` flag:
 ```
 go test -v ./...
 ```
+
+## Continuous Integration
+
+This project uses GitHub Actions for continuous integration:
+
+- Builds and tests the code on multiple Go versions
+- Runs linting with golangci-lint
+- Generates test coverage reports
+
+You can see the current build status and test coverage at the top of this README.
 
 ## Disclaimer
 

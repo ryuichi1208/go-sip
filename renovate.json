@@ -2,5 +2,10 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
-  ]
+  ],
+  "description": "Renovate configuration file for automated dependency updates.",
+  "prHourlyLimit": 2,
+  "prConcurrentLimit": 5,
+  "timezone": "Asia/Tokyo",
+  "dependencyDashboard": true
 }
